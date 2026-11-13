@@ -16,6 +16,8 @@ members = [
   "rustls-aws-lc-rs",
   # the ring crypto provider
   "rustls-ring",
+  # no_std RustCrypto crypto provider
+  "rustls-rustcrypto",
   # common code for testing the core crate
   "rustls-test",
   # benchmarking tool
@@ -132,6 +134,7 @@ trivial_numeric_casts = "warn"
 unexpected_cfgs = { level = "warn", check-cfg = [
   "cfg(bench)",
   "cfg(coverage_nightly)",
+  "cfg(kani)",
   "cfg(rustls_docsrs)",
 ] }
 unnameable_types = "warn"
