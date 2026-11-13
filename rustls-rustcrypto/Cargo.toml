@@ -22,3 +22,9 @@ p384 = { version = "0.14", default-features = false, features = ["alloc", "ecdh"
 rustls = { path = "../rustls", version = "0.24.0-dev.3", default-features = false, features = ["webpki"] }
 sha2 = { version = "0.11", default-features = false }
 x25519-dalek = { version = "3", features = ["static_secrets"] }
+
+[dev-dependencies]
+# The host's randomness, for the tests: the provider itself has none
+getrandom = "0.3"
+proptest = { version = "1.12", features = ["std"], default-features = false }
+serde_json = "1.0"

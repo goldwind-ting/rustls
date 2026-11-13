@@ -52,9 +52,35 @@ Derived from [`rustls-pure`] 0.15.4, ported to rustls 0.24 and `no_std`:
 
 Upstream's Kani proofs of the input-validation code are kept in this crate's
 `#[cfg(kani)]` `verification` module (`cargo kani -p rustls-rustcrypto`).
-Upstream's Wycheproof test suite lives in upstream's `tests.rs` and is not
-carried over here; the port is instead exercised by its consumers (DaoOS
-cross-checked against OpenSSL on the host).
+
+## Tests
+
+```sh
+cargo test -p rustls-rustcrypto
+```
+
+- `src/tests.rs`: known answers and known attacks. The Wycheproof vectors in
+  `wycheproof/` (from [C2SP/wycheproof]'s `testvectors_v1/`, taken from the
+  `wycheproof-ng-rs` crate's `src/data/`) are run against every algorithm the
+  provider offers: inputs that must be accepted and inputs that must be
+  refused, such as forged signatures, points off the curve, altered tags and
+  low-order keys. The rest checks the glue between rustls and the primitives,
+  which the vectors cannot see: nonces, sequence numbers, the record layer's
+  binding to place and content, randomness and the wiping of keys.
+- `src/tests/properties.rs`: broken input in place of fuzzing — key shares of
+  every group, ML-KEM ciphertexts, signatures and records, each of which must
+  be refused (or, for ML-KEM ciphertexts, give an unrelated secret), never
+  accepted and never a panic.
+- `src/tests/constant_time.rs`: dudect-style timing tests, `#[ignore]`d
+  because they need a release build and an idle machine:
+  `cargo test --release -p rustls-rustcrypto --lib constant_time -- --ignored --nocapture`.
+- `tests/handshake.rs`: the provider end to end — a TLS 1.3 handshake between
+  two rustls connections, with application data both ways, against the test
+  certificate in `tests/data/`.
+- `tests/randomness_*.rs`: the randomness source is the application's: before
+  one is installed, every request fails.
+
+[C2SP/wycheproof]: https://github.com/C2SP/wycheproof
 
 [`rustls`]: https://docs.rs/rustls
 [RustCrypto]: https://github.com/RustCrypto

@@ -43,6 +43,10 @@
 
 extern crate alloc;
 
+// The tests use std (files, timing) and the primitives directly.
+#[cfg(test)]
+extern crate std;
+
 use alloc::borrow::Cow;
 use alloc::format;
 use alloc::string::String;
@@ -109,7 +113,7 @@ struct NoTicketer;
 
 impl TicketerFactory for NoTicketer {
     fn ticketer(&self) -> Result<Arc<dyn TicketProducer>, Error> {
-        Ok(Arc::new(NoTicketer))
+        Ok(Arc::new(Self))
     }
 }
 
@@ -217,7 +221,7 @@ impl<D: ShaAlgorithm> hash::Context for ShaContext<D> {
     }
 
     fn fork(&self) -> Box<dyn hash::Context> {
-        Box::new(ShaContext(self.0.clone()))
+        Box::new(Self(self.0.clone()))
     }
 
     fn finish(self: Box<Self>) -> hash::Output {
@@ -1002,7 +1006,7 @@ impl SigningKey for Ed25519Key {
     fn choose_scheme(&self, offered: &[SignatureScheme]) -> Option<Box<dyn Signer>> {
         offered
             .contains(&SignatureScheme::ED25519)
-            .then(|| Box::new(Ed25519Key(self.0.clone())) as Box<dyn Signer>)
+            .then(|| Box::new(Self(self.0.clone())) as Box<dyn Signer>)
     }
 
     fn public_key(&self) -> Option<SubjectPublicKeyInfoDer<'_>> {
@@ -1181,6 +1185,12 @@ static SUPPORTED_SIG_ALGS: WebPkiSupportedAlgorithms = match WebPkiSupportedAlgo
     Ok(algs) => algs,
     Err(_) => panic!("bad WebPkiSupportedAlgorithms"),
 };
+
+// The provider's own tests: known answers and known attacks (Wycheproof vectors, plus the glue
+// between rustls and the primitives that the vectors cannot see), and the broken-input
+// properties. They are unit tests because they reach into the crate's internals.
+#[cfg(test)]
+mod tests;
 
 // Kani's proofs of the code above that takes the peer's bytes: every input up to the bounds
 // given, not samples. The cryptography is the RustCrypto crates' and the protocol rustls's, so
